@@ -8,7 +8,6 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ): void => {
-  // Your authentication logic here
   const token = req.header("Authorization")?.split(" ")[1];
   if (!token) {
     res.status(403).json({ message: "Access denied. No token provided" });

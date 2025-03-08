@@ -4,8 +4,8 @@ import { User } from "../models/Users";
 
 const saltRounds = 10;
 export const registerController = async (req: Request, res: Response) => {
-  const { userName, password } = req.body;
-  const existingUser = await User.findOne({ userName });
+  const { username, password } = req.body;
+  const existingUser = await User.findOne({ username });
 
   if (existingUser) {
     res.status(400).json({ message: "User already exists" });
@@ -15,7 +15,7 @@ export const registerController = async (req: Request, res: Response) => {
     const salt = await bcrypt.genSalt(saltRounds);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = new User({
-      username: userName,
+      username: username,
       password: hashedPassword
     });
     await newUser.save();

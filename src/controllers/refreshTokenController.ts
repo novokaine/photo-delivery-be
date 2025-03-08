@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import * as jwt from "jsonwebtoken";
+import { generateAccessToken } from "../utils/generateTokens";
 
 interface RefreshTokenRequest extends Request {
   cookies: {
@@ -7,31 +8,25 @@ interface RefreshTokenRequest extends Request {
   };
 }
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
-const JWT_SECRET = process.env.JWT_SECRET as string;
 
-const generateAccessToken = (user: any) =>
-  jwt.sign(user, ACCESS_SECRET, { expiresIn: "15m" });
-
-const generateRefreshToken = (user: string) =>
-  jwt.sign(user, REFRESH_SECRET, { expiresIn: "7d" });
-
-export const refreshTokenController = async (
+export const refreshTokenController: RequestHandler = async (
   req: RefreshTokenRequest,
   res: Response
-) => {
+): Promise<any> => {
   const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) {
-    return res
-      .status(403)
-      .json({ message: "Access denied. No token provided" });
-  }
+  if (!refreshToken)
+    return res.status(401).json({ message: "No refresh token provided" });
 
-  jwt.verify(refreshToken, JWT_SECRET, (err, user: any) => {
-    if (err) return res.status(403).json({ message: "Invalid token" });
+  return jwt.verify(refreshToken, REFRESH_SECRET, (err, user: any) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
 
-    const accessToken = generateAccessToken({ user: user?.username });
-    res.json({ accessToken });
+    const accessToken = generateAccessToken({
+      id: user.id,
+      username: user.username
+    });
+    return res.json({ accessToken });
   });
 };
