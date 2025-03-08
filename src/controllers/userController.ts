@@ -36,7 +36,7 @@ export const loginController: (req: Request, res: Response) => void = async (
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: false,
-      sameSite: "none",
+      sameSite: "strict",
       path: "/"
     });
 
@@ -49,7 +49,7 @@ export const loginController: (req: Request, res: Response) => void = async (
 export const logoutController = (req: Request, res: Response) => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    sameSite: "none",
+    sameSite: "strict",
     secure: false,
     path: "/"
   });
