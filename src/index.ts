@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes";
 import privateRoutes from "./routes/privateRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import { connectDB } from "./db";
 
 dotenv.config();
@@ -22,6 +23,7 @@ connectDB();
 
 app.use("/api/", authRoutes);
 app.use("/api/private", privateRoutes);
+app.use("/api/admin", adminRoutes);
 
 app
   .listen(PORT, () => console.log(`Server is listening on ${PORT}`))

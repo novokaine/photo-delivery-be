@@ -11,13 +11,26 @@ export const generateAccessToken = (user: {
   id: string;
   username: string;
   isAdmin: boolean;
-}) =>
-  jwt.sign(user, ACCESS_SECRET, {
-    expiresIn: "15s"
-  });
+}) => {
+  try {
+    return jwt.sign(user, ACCESS_SECRET, {
+      expiresIn: "15m"
+    });
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
 
 export const generateRefreshToken = (user: {
   id: string;
   username: string;
   isAdmin: boolean;
-}) => jwt.sign(user, REFRESH_SECRET, { expiresIn: "7d" });
+}) => {
+  try {
+    return jwt.sign(user, REFRESH_SECRET, { expiresIn: "7d" });
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};

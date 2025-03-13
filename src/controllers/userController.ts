@@ -9,6 +9,7 @@ import {
 } from "../utils/generateTokens";
 
 dotenv.config();
+
 const saltRounds = 10;
 const SECRET_KEY = process.env.JWT_SECRET as string;
 
@@ -39,6 +40,9 @@ export const loginController: (req: Request, res: Response) => void = async (
       isAdmin
     });
 
+    if (!accessToken || !refreshToken)
+      return res.status(500).json({ message: "Token generation failed" });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: false,
@@ -46,7 +50,7 @@ export const loginController: (req: Request, res: Response) => void = async (
       path: "/"
     });
 
-    return res.json({ accessToken });
+    return res.json({ accessToken, isAdmin });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }

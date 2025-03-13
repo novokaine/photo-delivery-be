@@ -6,7 +6,7 @@ dotenv.config();
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 
-export const getPrivateData = (req: Request, res: Response) => {
+export const getPrivateData = (req: Request, res: Response): any => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ message: "Unauthorized" });
 
