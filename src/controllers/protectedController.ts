@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;

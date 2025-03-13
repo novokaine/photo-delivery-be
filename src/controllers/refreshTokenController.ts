@@ -25,7 +25,8 @@ export const refreshTokenController: RequestHandler = async (
 
     const accessToken = generateAccessToken({
       id: user.id,
-      username: user.username
+      username: user.username,
+      isAdmin: user.isAdmin
     });
     return res.json({ accessToken });
   });
