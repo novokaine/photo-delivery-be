@@ -1,0 +1,1 @@
+export { getUserDataController } from "./userControllers";

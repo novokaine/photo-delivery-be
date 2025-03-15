@@ -8,7 +8,8 @@ export const adminMiddleware = (
   res: Response,
   next: NextFunction
 ): any => {
-  const token = req.header("Authorization")?.split(" ")[1];
+  const token = req.cookies.accessToken;
+
   if (!token)
     return res
       .status(401)

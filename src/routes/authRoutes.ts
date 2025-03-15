@@ -3,7 +3,7 @@ import {
   loginController,
   logoutController,
   registerController
-} from "../controllers/userController";
+} from "../controllers/authController";
 import { refreshTokenController } from "../controllers/refreshTokenController";
 
 const router = Router();

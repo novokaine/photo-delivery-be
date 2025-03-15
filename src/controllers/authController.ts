@@ -3,15 +3,11 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { User } from "../models/Users";
-import {
-  generateAccessToken,
-  generateRefreshToken
-} from "../utils/generateTokens";
+import { generateAccessToken } from "../utils/generateTokens";
 
 dotenv.config();
 
 const saltRounds = 10;
-const SECRET_KEY = process.env.JWT_SECRET as string;
 
 export const loginController: (req: Request, res: Response) => void = async (
   req,
@@ -34,23 +30,18 @@ export const loginController: (req: Request, res: Response) => void = async (
       isAdmin
     });
 
-    const refreshToken = generateRefreshToken({
-      id,
-      username: userName,
-      isAdmin
-    });
-
-    if (!accessToken || !refreshToken)
+    if (!accessToken)
       return res.status(500).json({ message: "Token generation failed" });
 
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: false,
       sameSite: "strict",
-      path: "/"
+      path: "/",
+      maxAge: 2 * 60 * 60 * 100
     });
 
-    return res.json({ accessToken, isAdmin });
+    return res.json({ isAdmin, accessToken });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -88,15 +79,4 @@ export const registerController = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
-};
-
-export const getUserData = async (req: Request, res: Response) => {
-  const authHeader = req.body.authorization;
-  if (!authHeader) return res.status(401).json({ message: "Unauthorized" });
-  const token = authHeader.split(" ")[1];
-  const decoded = jwt.verify(token, SECRET_KEY);
-  console.log(decoded);
-  const { username, password } = req.body;
-
-  const user = await User.findOne({ username });
 };
