@@ -15,7 +15,7 @@ export const refreshTokenController: RequestHandler = async (
   res: Response
 ): Promise<any> => {
   const refreshToken = req.cookies.accessToken;
-
+  console.log(refreshToken);
   if (!refreshToken)
     return res.status(401).json({ message: "No refresh token provided" });
 

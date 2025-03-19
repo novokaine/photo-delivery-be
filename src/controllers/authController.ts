@@ -41,7 +41,7 @@ export const loginController: (req: Request, res: Response) => void = async (
       maxAge: 2 * 60 * 60 * 100
     });
 
-    return res.json({ isAdmin, accessToken });
+    return res.status(200).json({ isAdmin, accessToken });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }
