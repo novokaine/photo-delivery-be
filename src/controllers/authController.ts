@@ -83,3 +83,14 @@ export const registerController = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const resetPasswordController: (
+  req: Request,
+  res: Response
+) => void = async (req, res) => {
+  const { email } = req.body;
+  // @TODO - yet to be implemented with user mail service and password reset link
+  const user = await User.findOne({ email });
+  // if (!user) return res.status(200).json({ message: "User not found" });
+  return res.status(200).json({ message: "Success" });
+};
