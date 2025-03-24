@@ -8,6 +8,7 @@ import { generateAccessToken } from "../utils/generateTokens";
 dotenv.config();
 
 const saltRounds = 10;
+const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 
 export const loginController: (req: Request, res: Response) => void = async (
   req,
@@ -22,7 +23,7 @@ export const loginController: (req: Request, res: Response) => void = async (
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const { id, username: userName, isAdmin } = user;
+    const { id, username: userName, isAdmin, email } = user;
 
     const accessToken = generateAccessToken({
       id,
@@ -41,7 +42,9 @@ export const loginController: (req: Request, res: Response) => void = async (
       maxAge: 2 * 60 * 60 * 100
     });
 
-    return res.status(200).json({ isAdmin, accessToken });
+    return res
+      .status(200)
+      .json({ userData: { userName, isAdmin, email }, accessToken });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -93,4 +96,34 @@ export const resetPasswordController: (
   const user = await User.findOne({ email });
   // if (!user) return res.status(200).json({ message: "User not found" });
   return res.status(200).json({ message: "Success" });
+};
+
+// @TODO - not yet used in the client
+export const checkAuthController: (
+  req: Request,
+  res: Response
+) => void = async (req, res) => {
+  const accessToken = req.cookies.accessToken;
+  // const user = await User.findOne({ username: "sergiu" });
+
+  if (!accessToken) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const decoded = jwt.verify(accessToken, ACCESS_SECRET);
+
+    if (typeof decoded === "object") {
+      const { id } = decoded;
+      const user = await User.findById({ _id: id });
+
+      if (user) {
+        const { email, username, isAdmin } = user;
+        console.log(user);
+        return res.status(200).json({ user: { username, email, isAdmin } });
+      }
+    } else {
+      return res.status(404).json({ message: "User Not found" });
+    }
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
 };

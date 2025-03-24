@@ -15,8 +15,8 @@ export const getUserDataController: (req: any, res: Response) => void = async (
 
   if (!decoded) return res.status(403).json({ message: "Access denied" });
 
-  const { username, isAdmin } = req.user;
+  const { username, email, isAdmin } = req.user;
   const user = await User.findOne({ username });
   if (!user) return res.status(404).json({ message: "User not found" });
-  return res.json({ message: { username, isAdmin } });
+  return res.json({ message: { username, email, isAdmin } });
 };
