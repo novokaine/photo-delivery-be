@@ -14,28 +14,32 @@ export const refreshTokenController: RequestHandler = async (
   req: RefreshTokenRequest,
   res: Response
 ): Promise<any> => {
-  const refreshToken = req.cookies.accessToken;
+  const currentAccessToken = req.cookies.accessToken;
 
-  if (!refreshToken)
+  if (!currentAccessToken)
     return res.status(401).json({ message: "No refresh token provided" });
 
-  return jwt.verify(refreshToken, ACCESS_SECRET, (err, user: any) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid refresh token" });
+  return jwt.verify(
+    currentAccessToken,
+    ACCESS_SECRET,
+    (err, { id, username, isAdmin }: any) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid refresh token" });
+      }
+
+      const accessToken = generateAccessToken({
+        id,
+        username: username,
+        isAdmin: isAdmin
+      });
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        path: "/"
+      });
+      return res.status(200).json({ message: "Token generated successfully" });
     }
-
-    const accessToken = generateAccessToken({
-      id: user.id,
-      username: user.username,
-      isAdmin: user.isAdmin
-    });
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "strict",
-      path: "/"
-    });
-    return res.json({ accessToken });
-  });
+  );
 };

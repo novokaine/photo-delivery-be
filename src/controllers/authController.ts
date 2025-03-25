@@ -42,9 +42,7 @@ export const loginController: (req: Request, res: Response) => void = async (
       maxAge: 2 * 60 * 60 * 100
     });
 
-    return res
-      .status(200)
-      .json({ userData: { userName, isAdmin, email }, accessToken });
+    return res.status(200).json({ userData: { userName, isAdmin, email } });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -98,7 +96,6 @@ export const resetPasswordController: (
   return res.status(200).json({ message: "Success" });
 };
 
-// @TODO - not yet used in the client
 export const checkAuthController: (
   req: Request,
   res: Response
@@ -117,8 +114,7 @@ export const checkAuthController: (
 
       if (user) {
         const { email, username, isAdmin } = user;
-        console.log(user);
-        return res.status(200).json({ user: { username, email, isAdmin } });
+        return res.status(200).json({ userData: { username, email, isAdmin } });
       }
     } else {
       return res.status(404).json({ message: "User Not found" });

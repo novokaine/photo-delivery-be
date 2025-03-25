@@ -14,6 +14,6 @@ export const getPrivateData = (req: Request, res: Response): any => {
   jwt.verify(token, ACCESS_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Forbidden" });
 
-    res.json({ message: "Protected content", user });
+    return res.json({ message: "Protected content", user });
   });
 };
