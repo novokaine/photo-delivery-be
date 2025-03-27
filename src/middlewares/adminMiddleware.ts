@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const SECRET_KEY = process.env.JWT_SECRET as string;
+const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 
 export const adminMiddleware = (
   req: Request,
@@ -16,7 +16,7 @@ export const adminMiddleware = (
       .json({ message: "Access denied. No token provided" });
 
   try {
-    const decoded = jwt.verify(token, SECRET_KEY);
+    const decoded = jwt.verify(token, ACCESS_SECRET);
     if (!(decoded as any).isAdmin)
       return res.status(403).json({ message: "Access denied. Admins only" });
 
