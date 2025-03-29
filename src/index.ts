@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes";
 import privateRoutes from "./routes";
 import adminRoutes from "./routes/adminRoutes";
 import { connectDB } from "./db";
+import fileUpload from "express-fileupload";
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,8 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(fileUpload());
 connectDB();
 
 app.use("/api/", authRoutes);

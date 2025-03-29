@@ -13,7 +13,7 @@ export const generateAccessToken = (user: {
 }) => {
   try {
     return jwt.sign(user, ACCESS_SECRET, {
-      expiresIn: "15m"
+      expiresIn: "60m"
     });
   } catch (err) {
     console.error(err);
