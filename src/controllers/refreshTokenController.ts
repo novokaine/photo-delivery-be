@@ -1,30 +1,31 @@
 import { Request, RequestHandler, Response } from "express";
 import * as jwt from "jsonwebtoken";
 import { generateAccessToken } from "../utils/generateTokens";
+import { NO_TOKEN, SUCCESS } from "../utils/serverResponseStatus";
 
 interface RefreshTokenRequest extends Request {
   cookies: {
-    accessToken: string;
+    refreshToken: string;
   };
 }
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
+const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
 
 export const refreshTokenController: RequestHandler = async (
   req: RefreshTokenRequest,
   res: Response
 ): Promise<any> => {
-  const currentAccessToken = req.cookies.accessToken;
+  const refreshToken = req.cookies.refreshToken;
 
-  if (!currentAccessToken)
-    return res.status(401).json({ message: "No refresh token provided" });
+  if (!refreshToken)
+    return res.status(NO_TOKEN).json({ message: "No refresh token provided" });
 
   return jwt.verify(
-    currentAccessToken,
-    ACCESS_SECRET,
+    refreshToken,
+    REFRESH_SECRET,
     (err, { id, username, isAdmin }: any) => {
       if (err) {
-        return res.status(403).json({ message: "Invalid refresh token" });
+        return res.status(NO_TOKEN).json({ message: "Invalid refresh token" });
       }
 
       const accessToken = generateAccessToken({
@@ -33,13 +34,7 @@ export const refreshTokenController: RequestHandler = async (
         isAdmin: isAdmin
       });
 
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "strict",
-        path: "/"
-      });
-      return res.status(200).json({ message: "Token generated successfully" });
+      return res.status(SUCCESS).json({ accessToken });
     }
   );
 };

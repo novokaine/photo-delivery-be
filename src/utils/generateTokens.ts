@@ -4,8 +4,9 @@ dotenv.config();
 
 // Secret Keys
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
+const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
 
-// Generate Tokens
+// Generate Tokens (short live)
 export const generateAccessToken = (user: {
   id: string;
   username: string;
@@ -13,7 +14,21 @@ export const generateAccessToken = (user: {
 }) => {
   try {
     return jwt.sign(user, ACCESS_SECRET, {
-      expiresIn: "60m"
+      expiresIn: "15m"
+    });
+  } catch (err) {
+    return null;
+  }
+};
+
+// Long living
+export const generateRefreshToken = (user: {
+  id: string;
+  username: string;
+}) => {
+  try {
+    return jwt.sign(user, REFRESH_SECRET, {
+      expiresIn: "7d"
     });
   } catch (err) {
     console.error(err);

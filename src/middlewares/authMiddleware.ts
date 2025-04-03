@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { TOKEN_EXPIRED, UNAUTHORIZED } from "../utils/serverResponseStatus";
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 
@@ -8,9 +9,11 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies.accessToken;
+  const token = req.headers.authorization?.split("Bearer ")[1];
   if (!token) {
-    res.status(401).json({ message: "Access denied. No token provided" });
+    res
+      .status(UNAUTHORIZED)
+      .json({ message: "Access denied. No token provided" });
     return;
   }
 
@@ -19,6 +22,7 @@ export const authMiddleware = (
     (req as any).user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    res.status(TOKEN_EXPIRED).json({ message: "Invalid or expired token" });
+    return;
   }
 };
