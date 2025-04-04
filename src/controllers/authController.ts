@@ -121,12 +121,12 @@ export const resetPasswordController: (
   return res.status(SUCCESS).json({ message: "Success" });
 };
 
+// @TODO - investigate promise return type
 export const checkAuthController: (
   req: Request,
   res: Response
-) => void = async (req, res) => {
+) => Promise<any> = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  // const user = await User.findOne({ username: "sergiu" });
 
   if (!refreshToken)
     return res.status(UNAUTHORIZED).json({ message: "Unauthorized" });
@@ -134,19 +134,19 @@ export const checkAuthController: (
   try {
     const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
 
-    if (typeof decoded === "object") {
-      const { id } = decoded;
-      const user = await User.findById({ _id: id });
-
-      if (user) {
-        const { email, username, isAdmin } = user;
-        return res
-          .status(SUCCESS)
-          .json({ userData: { username, email, isAdmin } });
-      }
-    } else {
+    if (typeof decoded !== "object")
       return res.status(NOT_FOUND).json({ message: "User Not found" });
-    }
+
+    const { id } = decoded;
+    const user = await User.findById({ _id: id });
+
+    if (!user) return res.status(NOT_FOUND).json({ message: "User not found" });
+
+    const { email, username, isAdmin } = user;
+    const accessToken = generateAccessToken({ id, username, isAdmin });
+    return res
+      .status(SUCCESS)
+      .json({ userData: { username, email, isAdmin }, accessToken });
   } catch (err) {
     return res.status(UNAUTHORIZED).json({ message: "Invalid token" });
   }
