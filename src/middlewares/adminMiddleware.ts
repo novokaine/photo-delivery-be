@@ -5,14 +5,15 @@ import {
   TOKEN_EXPIRED,
   UNAUTHORIZED
 } from "../utils/serverResponseStatus";
+import { User } from "../models/Users";
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET as string;
 
-export const adminMiddleware = (
+export const adminMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
-): any => {
+): Promise<any> => {
   const token = req.headers.authorization?.split("Bearer ")[1];
 
   if (!token)
@@ -22,7 +23,10 @@ export const adminMiddleware = (
 
   try {
     const decoded = jwt.verify(token, ACCESS_SECRET);
-    if (!(decoded as any).isAdmin)
+    const id = typeof decoded !== "string" ? decoded.id : undefined;
+    const userData = await User.findOne({ _id: id });
+
+    if (!userData?.isAdmin)
       return res
         .status(UNAUTHORIZED)
         .json({ message: "Access denied. Admins only" });
