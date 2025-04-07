@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
+import {
+  BAD_REQUEST,
+  INTERNAL_SERVER_ERROR,
+  SUCCESS
+} from "../../utils/serverResponseStatus";
 const uploadDir = "./public/uploads";
 
 if (!fs.existsSync(uploadDir)) {
@@ -13,7 +18,7 @@ export const uploadPhotosController = async (
 ): Promise<any> => {
   try {
     if (!req.files || !req.files.photos) {
-      return res.status(400).json({ error: "No files uploaded" });
+      return res.status(BAD_REQUEST).json({ error: "No files uploaded" });
     }
 
     const files = Array.isArray(req.files.photos)
@@ -25,9 +30,9 @@ export const uploadPhotosController = async (
       await file.mv(filePath);
     }
 
-    res.status(200).json({ message: "Files uploaded successfully" });
+    res.status(SUCCESS).json({ message: "Files uploaded successfully" });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ error: "Server error" });
+    res.status(INTERNAL_SERVER_ERROR).json({ error: "Server error" });
   }
 };
