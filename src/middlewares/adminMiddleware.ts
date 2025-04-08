@@ -23,10 +23,8 @@ export const adminMiddleware = async (
 
   try {
     const decoded = jwt.verify(token, ACCESS_SECRET);
-    const id = typeof decoded !== "string" ? decoded.id : undefined;
-    const userData = await User.findOne({ _id: id });
 
-    if (!userData?.isAdmin)
+    if (typeof decoded !== "object" || !decoded?.isAdmin)
       return res
         .status(UNAUTHORIZED)
         .json({ message: "Access denied. Admins only" });
