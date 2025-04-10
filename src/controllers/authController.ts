@@ -85,7 +85,7 @@ export const logoutController = (req: Request, res: Response) => {
 export const registerController = async (req: Request, res: Response) => {
   const { email, username, password } = req.body;
 
-  const existingUser = await User.findOne({ username });
+  const existingUser = await User.findOne({ email });
 
   if (existingUser) {
     res.status(BAD_REQUEST).json({ message: "User already exists" });
@@ -100,10 +100,10 @@ export const registerController = async (req: Request, res: Response) => {
       password: hashedPassword,
       isAdmin: false
     });
+
     await newUser.save();
     res.status(CREATED).json({ message: "New User added successfully" });
   } catch (error) {
-    console.log(error);
     res
       .status(INTERNAL_SERVER_ERROR)
       .json({ message: "Internal server error" });
@@ -148,6 +148,6 @@ export const checkAuthController: (
       .status(SUCCESS)
       .json({ userData: { username, email, isAdmin }, accessToken });
   } catch (err) {
-    return res.status(UNAUTHORIZED).json({ message: "Invalid token" });
+    return res.status(UNAUTHORIZED).json({ message: "Unauthorized" });
   }
 };
