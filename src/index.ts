@@ -11,10 +11,11 @@ import fileUpload from "express-fileupload";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
+const clientUrl = process.env.CLIEN_URL || "http://localhost:3000";
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: clientUrl,
     credentials: true
   })
 );
