@@ -6,26 +6,11 @@ import {
   INTERNAL_SERVER_ERROR,
   SUCCESS
 } from "../../utils/serverResponseStatus";
-import { moveFileToFolder, UPLOAD_DIR } from "../../utils/fileHandlers";
-
-const uploadDir = "./public/rawUploads";
+import { readAndMoveFolderFiles, UPLOAD_DIR } from "../../utils/fileHandlers";
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR);
 }
-
-interface PhotoData {
-  name: string;
-  dateTaken: number;
-  year: number;
-}
-
-const moveFiles = () => {
-  fs.readdir(UPLOAD_DIR, (err, files) => {
-    if (err) throw err;
-    files.map(moveFileToFolder);
-  });
-};
 
 export const uploadPhotosController = async (
   req: Request,
@@ -40,18 +25,19 @@ export const uploadPhotosController = async (
       ? req.files.photos
       : [req.files.photos];
 
-    for (const file of files) {
-      const filePath = path.join(uploadDir, file.name);
+    let counter = files.length;
 
-      await file
-        .mv(filePath)
-        .then(moveFiles)
-        .then(() =>
-          res.status(SUCCESS).json({ message: "Files uploaded successfully" })
-        );
+    for (const file of files) {
+      const filePath = path.join(UPLOAD_DIR, file.name);
+      await file.mv(filePath);
+      counter--;
     }
+
+    if (counter === 0) readAndMoveFolderFiles();
+    return res.status(SUCCESS).json({ message: "File uploaded successfuly" });
   } catch (error) {
-    console.error("Upload error:", error);
-    res.status(INTERNAL_SERVER_ERROR).json({ error: "Server error" });
+    return res
+      .status(INTERNAL_SERVER_ERROR)
+      .json({ message: "Failed to upload photos" });
   }
 };

@@ -1,11 +1,14 @@
 import path from "path";
 import ExifReader from "exifreader";
-import fs from "fs";
+import fs, { promises as fsPromises } from "fs";
+import { PhotoData } from "../types/Photo";
+import { Photos } from "../models/Photos";
 export const UPLOAD_DIR = "./public/rawUploads";
 
+const dbCollector: PhotoData[] = [];
+
 // Returns proper folders names based on photo created date
-const getFoldersName = (dateCreated: Date) => {
-  console.log(dateCreated);
+const getDestinationDirectory = (dateCreated: Date) => {
   const date = new Date(dateCreated);
   const year = new Date(dateCreated).getFullYear();
   const month = date.getMonth() + 1;
@@ -13,27 +16,75 @@ const getFoldersName = (dateCreated: Date) => {
 
   const monthString = month < 10 ? `0${month}` : month;
   const dayString = day < 10 ? `0${day}` : day;
-  const yearFolder = `./public/${year}`;
   const dateFolder = `${year}-${monthString}-${dayString}`;
 
-  return { yearFolder, dateFolder };
+  const destinationDirectory = path.join(`./public/${year}`, `${dateFolder}`);
+
+  if (!fs.existsSync(`./public/${year}`)) {
+    fs.mkdirSync(`./public/${year}`);
+  }
+
+  if (!fs.existsSync(destinationDirectory)) {
+    fs.mkdirSync(destinationDirectory);
+  }
+
+  return { destinationDirectory };
 };
 
-export const moveFileToFolder = async (file: string) => {
+export const moveFilesToFolder = (file: string): Promise<void> => {
   const filePath = path.join(UPLOAD_DIR, file);
-  const fileData = await ExifReader.load(filePath);
-  const {
-    CreateDate: { value }
-  } = fileData;
-  const { yearFolder, dateFolder } = getFoldersName(value as unknown as Date);
+  return new Promise(async (resolve, reject) => {
+    try {
+      const exifData = await ExifReader.load(filePath);
 
-  if (!fs.existsSync(yearFolder)) {
-    fs.mkdirSync(yearFolder);
-  }
+      const {
+        CreateDate: { value }
+      } = exifData;
 
-  if (!fs.existsSync(`${yearFolder}/${dateFolder}`)) {
-    fs.mkdirSync(`${yearFolder}/${dateFolder}`);
+      const { destinationDirectory } = getDestinationDirectory(
+        value as unknown as Date
+      );
+
+      const pathToMove = path.join(destinationDirectory, file);
+
+      fs.rename(filePath, pathToMove, (err) => {
+        if (err) {
+          console.error(`Error moving file ${file}`, err);
+          return reject(err);
+        }
+        const photoData: PhotoData = {
+          name: file,
+          dateTaken: value as unknown as Date,
+          year: new Date(value).getFullYear()
+        };
+        dbCollector.push(photoData);
+        resolve();
+      });
+    } catch (err) {
+      console.error(`Error processing file ${file} for exif data `, err);
+      reject(err);
+    }
+  });
+};
+
+const updatePhotoDb = async () => {
+  const currentPhotos = await Photos.find({});
+
+  await Photos.insertMany(dbCollector, { ordered: false })
+    .then(() => console.log("Photos inserted successfully"))
+    .catch((err) => console.error(err));
+};
+
+export const readAndMoveFolderFiles = async () => {
+  try {
+    const files = await fsPromises.readdir(UPLOAD_DIR);
+    if (files.length === 0) {
+      return;
+    }
+    const moveFiles = files.map((file) => moveFilesToFolder(file));
+
+    await Promise.all(moveFiles).then(() => updatePhotoDb());
+  } catch (err) {
+    console.error("Error in handling photo moves ", err);
   }
-  const pathToMove = path.join(`${yearFolder}/${dateFolder}`, file);
-  fs.rename(filePath, pathToMove, () => {});
 };
