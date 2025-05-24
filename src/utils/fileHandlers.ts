@@ -5,9 +5,9 @@ import { PhotoData } from "../types/Photo";
 import { Photos } from "../models/Photos";
 export const UPLOAD_DIR = "./public/rawUploads";
 
-const dbCollector: PhotoData[] = [];
+let dbCollector: PhotoData[] = [];
 
-// Returns proper folders names based on photo created date
+// Create and returns directory path names based on photo created date
 const getDestinationDirectory = (dateCreated: Date) => {
   const date = new Date(dateCreated);
   const year = new Date(dateCreated).getFullYear();
@@ -31,60 +31,70 @@ const getDestinationDirectory = (dateCreated: Date) => {
   return { destinationDirectory };
 };
 
-export const moveFilesToFolder = (file: string): Promise<void> => {
+const moveFilesToFolder = async (file: string): Promise<void> => {
   const filePath = path.join(UPLOAD_DIR, file);
-  return new Promise(async (resolve, reject) => {
-    try {
-      const exifData = await ExifReader.load(filePath);
+  try {
+    const exifData = await ExifReader.load(filePath);
+    const {
+      CreateDate: { value }
+    } = exifData;
 
-      const {
-        CreateDate: { value }
-      } = exifData;
+    const { destinationDirectory } = getDestinationDirectory(
+      value as unknown as Date
+    );
 
-      const { destinationDirectory } = getDestinationDirectory(
-        value as unknown as Date
-      );
+    const pathToMove = path.join(destinationDirectory, file);
 
-      const pathToMove = path.join(destinationDirectory, file);
-
-      fs.rename(filePath, pathToMove, (err) => {
-        if (err) {
-          console.error(`Error moving file ${file}`, err);
-          return reject(err);
-        }
-        const photoData: PhotoData = {
-          name: file,
-          dateTaken: value as unknown as Date,
-          year: new Date(value).getFullYear()
-        };
-        dbCollector.push(photoData);
-        resolve();
-      });
-    } catch (err) {
-      console.error(`Error processing file ${file} for exif data `, err);
-      reject(err);
-    }
-  });
+    await fsPromises.rename(filePath, pathToMove).then(() => {
+      const photoData: PhotoData = {
+        name: file,
+        dateTaken: value as unknown as Date,
+        year: new Date(value).getFullYear()
+      };
+      dbCollector.push(photoData);
+    });
+  } catch (err) {
+    throw err;
+  }
 };
 
 const updatePhotoDb = async () => {
-  const currentPhotos = await Photos.find({});
+  const newPhotoCollection = dbCollector.map(({ name }) => name);
 
-  await Photos.insertMany(dbCollector, { ordered: false })
-    .then(() => console.log("Photos inserted successfully"))
-    .catch((err) => console.error(err));
+  const existing = await Photos.find(
+    { name: { $in: newPhotoCollection } },
+    { name: 1 }
+  ).then((result) => result.map(({ name }) => name));
+
+  const filtered = dbCollector.filter(({ name }) => !existing.includes(name));
+
+  if (filtered.length === 0) {
+    console.log("No photos to insert");
+    return { message: "No photos to insert" };
+  }
+
+  await Photos.insertMany(filtered, { ordered: false })
+    .then(() => {
+      dbCollector = [];
+      return "Photos uploaded successfully";
+    })
+    .catch((err) => {
+      throw err;
+    });
 };
 
 export const readAndMoveFolderFiles = async () => {
   try {
     const files = await fsPromises.readdir(UPLOAD_DIR);
+
     if (files.length === 0) {
       return;
     }
-    const moveFiles = files.map((file) => moveFilesToFolder(file));
 
-    await Promise.all(moveFiles).then(() => updatePhotoDb());
+    const filesToMove = files.map((file) => moveFilesToFolder(file));
+
+    await Promise.all(filesToMove).then(() => updatePhotoDb());
   } catch (err) {
-    console.error("Error in handling photo moves ", err);
+    throw err;
   }
 };
