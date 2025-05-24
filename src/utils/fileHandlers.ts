@@ -69,7 +69,6 @@ const updatePhotoDb = async () => {
   const filtered = dbCollector.filter(({ name }) => !existing.includes(name));
 
   if (filtered.length === 0) {
-    console.log("No photos to insert");
     return { message: "No photos to insert" };
   }
 
@@ -92,9 +91,13 @@ export const readAndMoveFolderFiles = async () => {
     }
 
     const filesToMove = files.map((file) => moveFilesToFolder(file));
-
     await Promise.all(filesToMove).then(() => updatePhotoDb());
   } catch (err) {
     throw err;
   }
 };
+
+export const checkExistingDublicates = async (files: string[]) =>
+  await Photos.find({ name: { $in: files } }, { name: 1 }).then((result) =>
+    result.map(({ name }) => name)
+  );
